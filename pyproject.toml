@@ -1,0 +1,56 @@
+[project]
+name = "pytalog"
+authors = [
+    {name = "Jeroen van den Hoven"},
+]
+description = "Standardise model training across libraries"
+readme = "README.md"
+requires-python = ">=3.8"
+version = "0.0.1"
+dynamic = ["license"]
+
+[tool.kedro]
+package_name = "data_cube_pipeline"
+project_name = "Data Cube Pipeline"
+project_version = "0.17.0"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 120
+known_third_party = "kedro"
+
+[tool.pytest.ini_options]
+markers = [
+    "end_to_end: End to end test, tends to be slow.",
+    "spark: uses Spark, will take extra time to set up.",
+    "wheel: will do wheel integrations, will take extra time"
+]
+filterwarnings = [
+    'ignore:Call to deprecated create function',  # Some tensorboard internal stuff
+    'ignore:Creating a LegacyVersion has been deprecated',  # Some pip internal stuff
+]   
+
+[tool.black]
+line-length = 120
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.pyc
+  | build
+  | dist
+  | \.toml
+)/
+'''
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+python_version = "3.8"
+implicit_reexport = true
+namespace_packages = true
+explicit_package_bases = true

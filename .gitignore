@@ -1,0 +1,29 @@
+__pycache__/
+*.egg-info/
+
+# notebooks
+.ipynb_checkpoints/
+
+# developer stuff
+.vscode/
+
+# data
+.csv
+.parquet
+.xls
+.xlsx
+
+# coverage
+.coverage*
+.coveragerc!
+
+# notebooks
+*.ipynb
+
+# build artifacts
+dist/
+packages/
+build/
+
+# personal todo list
+todo.txt
