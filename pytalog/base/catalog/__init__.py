@@ -1,2 +1,2 @@
-from .data_catalog import DataCatalog
+from .catalog import Catalog
 from .dataset import DataSet

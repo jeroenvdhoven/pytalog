@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from pytalog.spark.datasources.spark import SparkFileSource
+from pytalog.spark.data_sources.spark import SparkFileSource
 
 
 class TestSparkFileSource:

@@ -6,38 +6,38 @@ import yaml
 from jinja2 import Template
 
 from pytalog.base.catalog.dataset import DataSet
-from pytalog.base.datasources import DataSource
+from pytalog.base.data_sources import DataSource
 
 Data = TypeVar("Data")
 
 
-class DataCatalog(Dict[str, DataSource[Data]]):
-    """A collection of DataSources that together form a DataSet when loaded."""
+class Catalog(Dict[str, DataSource[Data]]):
+    """A collection of data_sources that together form a DataSet when loaded."""
 
-    def read(self) -> DataSet:
-        """Read all DataSources and generate a DataSet.
+    def read_all(self) -> DataSet:
+        """Read all data_sources and generate a DataSet.
 
-        Names of DataSources are preserved when loading the data.
+        Names of data_sources are preserved when loading the data.
 
         Returns:
-            DataSet: The DataSet constructed from the DataSources.
+            DataSet: The DataSet constructed from the data_sources.
         """
         return DataSet.from_dict({name: data.read() for name, data in self.items()})
 
     def __str__(self, indents: int = 0) -> str:
-        """Create string representation of this DataCatalog.
+        """Create string representation of this Catalog.
 
         Args:
             indents (int, optional): The number of preceding tabs. Defaults to 0.
 
         Returns:
-            str: A string representation of this DataCatalog.
+            str: A string representation of this Catalog.
         """
         tab = "\t" * indents
         return "\n".join([f"{tab}{name}: {source}" for name, source in self.items()])
 
-    def read_one(self, name: str) -> Data:
-        """Read a particular dataset from this DataCatalog.
+    def read(self, name: str) -> Data:
+        """Read a particular dataset from this Catalog.
 
         Args:
             name (str): The name of the dataset to read.
@@ -48,7 +48,7 @@ class DataCatalog(Dict[str, DataSource[Data]]):
         return self[name].read()
 
     @classmethod
-    def from_yaml(cls, path: Union[str, Path], parameters: Optional[Dict[str, Any]] = None) -> "DataCatalog":
+    def from_yaml(cls, path: Union[str, Path], parameters: Optional[Dict[str, Any]] = None) -> "Catalog":
         """Read a catalog in from a configuration YAML file.
 
         We expect the following format:
@@ -96,7 +96,7 @@ class DataCatalog(Dict[str, DataSource[Data]]):
                 do jinja templating on the YAML file's strings.
 
         Returns:
-            DataCatalog: A DataCatalog with DataSources based on the YAML file.
+            Catalog: A Catalog with data_sources based on the YAML file.
         """
         data_sources = {}
         if parameters is None:
@@ -108,15 +108,15 @@ class DataCatalog(Dict[str, DataSource[Data]]):
 
             parsed_contents = Template(contents).render(parameters)
             configuration = yaml.safe_load(parsed_contents)
-        assert isinstance(configuration, dict), "Cannot process YAML as DataCatalog: should be a dictionary."
+        assert isinstance(configuration, dict), "Cannot process YAML as Catalog: should be a dictionary."
 
         for dataset_name, dataset_params in configuration.items():
             dataset = cls._parse_object(dataset_params)
             assert isinstance(
                 dataset, DataSource
-            ), "Please make sure objects in your DataCatalog only translate to DataSources."
+            ), "Please make sure objects in your Catalog only translate to data_sources."
             data_sources[dataset_name] = dataset
-        return DataCatalog(**data_sources)
+        return Catalog(**data_sources)
 
     @classmethod
     def _parse_object(cls, dct: Dict[str, Any]) -> Any:
@@ -134,7 +134,7 @@ class DataCatalog(Dict[str, DataSource[Data]]):
         """
         assert cls._is_valid_parseable_object(
             dct
-        ), "DataCatalog: any dictionary parsed should have a `callable` and `args` entry."
+        ), "Catalog: any dictionary parsed should have a `callable` and `args` entry."
 
         callable_ = cls._load_class(dct["callable"])
         args = dct["args"]
@@ -158,7 +158,7 @@ class DataCatalog(Dict[str, DataSource[Data]]):
 
         Supported functionality includes:
         - Importing a class, e.g. pandas.DataFrame.
-        - Importing a static / class method, e.g. pytalog.base.catalog.DataCatalog:from_yaml
+        - Importing a static / class method, e.g. pytalog.base.catalog.Catalog:from_yaml
 
         Args:
             full_path (str): The path leading to the class or function to import.
@@ -168,7 +168,7 @@ class DataCatalog(Dict[str, DataSource[Data]]):
         """
         # check if we need to import a method.
         method_split = full_path.split(":")
-        assert len(method_split) <= 2, f"{full_path}: DataCatalogs do not accept paths with more than 1 `:`"
+        assert len(method_split) <= 2, f"{full_path}: Catalogs do not accept paths with more than 1 `:`"
         callable_path = method_split[0]
 
         # for importing we need to split out the last part of the string.

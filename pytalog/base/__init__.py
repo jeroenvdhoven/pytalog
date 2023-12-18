@@ -1,1 +1,1 @@
-from . import catalog, datasources
+from . import catalog, data_sources

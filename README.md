@@ -6,7 +6,7 @@
 There are a couple of examples available of training scripts using pytalog and various subpackages in the `examples` folder.
 
 In general, you'll need the following components:
-- DataCatalog's: a collection of DataSource's, that can be read to produce a DataSet. This will specify which data is used by your
+- Catalog's: a collection of DataSource's, that can be read to produce a DataSet. This will specify which data is used by your
 model's input and how to collect it. This can range from cloud-storage files, SQL databases, etc.
 - Pipeline: Another trainable pipeline format? Yes. Those familiar with kedro will see some similarities, but we specify a difference
 between the fitting and transforming phase, much like sklearn's pipelines. The framework should be flexible enough to allow a variety

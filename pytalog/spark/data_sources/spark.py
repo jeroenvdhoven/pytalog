@@ -3,8 +3,8 @@ from typing import Any, Dict, Optional
 from pyspark.sql import DataFrame as SparkDataFrame
 from pyspark.sql import SparkSession
 
-from pytalog.base.datasources.data_source import DataSource, WriteableDataSource
-from pytalog.spark.datasources.utils import guarantee_spark
+from pytalog.base.data_sources.data_source import DataSource, WriteableDataSource
+from pytalog.spark.data_sources.utils import guarantee_spark
 
 
 class SparkSqlSource(DataSource[SparkDataFrame]):

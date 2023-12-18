@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 from pytest import mark
 
-from pytalog.pandas.datasources.pandas import PANDAS_IO_FUNCTIONS, PandasFileSource
+from pytalog.pandas.data_sources.pandas import PandasFileSource
 from tests.utils import are_dataframes_equal, pytest_assert
 
 
@@ -21,13 +21,13 @@ class TestPandasFileSource:
 
         mock_read = MagicMock()
         try:
-            PANDAS_IO_FUNCTIONS[format] = (mock_read, None)
+            PandasFileSource.PANDAS_IO_FUNCTIONS[format] = (mock_read, None)
             source = PandasFileSource(path, format, read_args=args)
             source.read()
 
             mock_read.assert_called_once_with(path, **args)
         finally:
-            del PANDAS_IO_FUNCTIONS[format]
+            del PandasFileSource.PANDAS_IO_FUNCTIONS[format]
 
     @mark.parametrize(
         ["format", "suffix", "write_func", "write_kwargs", "read_kwargs"],
@@ -65,13 +65,13 @@ class TestPandasFileSource:
         mock_write = MagicMock()
 
         try:
-            PANDAS_IO_FUNCTIONS[format] = (None, mock_write)
+            PandasFileSource.PANDAS_IO_FUNCTIONS[format] = (None, mock_write)
             source = PandasFileSource(path, format, write_args=args)
             source.write(mock_df)
 
             mock_write.assert_called_once_with(mock_df, path, **args)
         finally:
-            del PANDAS_IO_FUNCTIONS[format]
+            del PandasFileSource.PANDAS_IO_FUNCTIONS[format]
 
     @mark.parametrize(
         ["format", "suffix", "read_func", "write_kwargs", "read_kwargs"],

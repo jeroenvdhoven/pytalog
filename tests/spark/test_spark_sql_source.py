@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from pytalog.spark.datasources.spark import SparkSqlSource
+from pytalog.spark.data_sources.spark import SparkSqlSource
 
 
 class Test_SparkSqlSource:
@@ -17,7 +17,7 @@ class Test_SparkSqlSource:
     def test_without_session(self):
         query = "select * from table"
 
-        with patch("pytalog.spark.datasources.spark.SparkSession.getActiveSession") as mock_active_session:
+        with patch("pytalog.spark.data_sources.spark.SparkSession.getActiveSession") as mock_active_session:
             source = SparkSqlSource(query)
             result = source.read()
 

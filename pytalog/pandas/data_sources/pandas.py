@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from pytalog.base.datasources.data_source import DataSource, WriteableDataSource
+from pytalog.base.data_sources.data_source import DataSource, WriteableDataSource
 
 
 class DataFrameSource(DataSource[pd.DataFrame]):

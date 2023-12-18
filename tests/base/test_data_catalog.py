@@ -4,8 +4,8 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from pytest import mark
 
-from pytalog.base.catalog import DataCatalog, DataSet
-from pytalog.base.datasources.data_source import DataSource
+from pytalog.base.catalog import Catalog, DataSet
+from pytalog.base.data_sources.data_source import DataSource
 from tests.utils import pytest_assert
 
 
@@ -22,16 +22,16 @@ class DummyDataSource(DataSource[int]):
         return p + 5
 
 
-class Test_DataCatalog:
-    def test_read(self):
-        dss = DataCatalog[int](
+class Test_Catalog:
+    def test_read_all(self):
+        dss = Catalog[int](
             {
                 "a": DummyDataSource(5),
                 "b": DummyDataSource(10),
             }
         )
 
-        result = dss.read()
+        result = dss.read_all()
         expected = {
             "a": 5,
             "b": 10,
@@ -53,31 +53,31 @@ class Test_DataCatalog:
         ],
     )
     def test_is_valid_parseable_object(self, expectation: bool, dictionary: dict):
-        result = DataCatalog._is_valid_parseable_object(dictionary)
+        result = Catalog._is_valid_parseable_object(dictionary)
         assert result == expectation
 
     def test_load_class(self):
-        path = "pytalog.base.datasources.DataSource"
-        result = DataCatalog._load_class(path)
+        path = "pytalog.base.data_sources.DataSource"
+        result = Catalog._load_class(path)
 
         assert result == DataSource
 
     def test_load_class_assert(self):
-        path = "pytalog.base.datasources.DataSource:read:failure"
+        path = "pytalog.base.data_sources.DataSource:read:failure"
 
-        with pytest_assert(AssertionError, f"{path}: DataCatalogs do not accept paths with more than 1 `:`"):
-            DataCatalog._load_class(path)
+        with pytest_assert(AssertionError, f"{path}: Catalogs do not accept paths with more than 1 `:`"):
+            Catalog._load_class(path)
 
     def test_load_class_with_method(self):
-        path = "pytalog.base.datasources.DataSource:read"
-        result = DataCatalog._load_class(path)
+        path = "pytalog.base.data_sources.DataSource:read"
+        result = Catalog._load_class(path)
 
         assert result == DataSource.read
 
     def test_parse_object(self):
         v = 10
         dct = {"callable": "tests.base.test_data_catalog.DummyDataSource", "args": {"v": v}}
-        result = DataCatalog._parse_object(dct)
+        result = Catalog._parse_object(dct)
 
         assert isinstance(result, DummyDataSource)
         assert result.v == v
@@ -85,14 +85,14 @@ class Test_DataCatalog:
     def test_nested_parse_object(self):
         p = 2
         dct = {"callable": "tests.base.test_data_catalog.DummyDataSource:dummy_method", "args": {"p": p}}
-        result = DataCatalog._parse_object(dct)
+        result = Catalog._parse_object(dct)
 
         assert result == 7
 
     def test_from_yaml(self):
         path = Path(__file__).parent / "config.yml"
 
-        catalog = DataCatalog.from_yaml(path)
+        catalog = Catalog.from_yaml(path)
 
         assert len(catalog) == 2
         assert "dataframe" in catalog
@@ -119,7 +119,7 @@ class Test_DataCatalog:
             "pandas_sql": {"sql": "select * from database.table", "con": "http://<your database url>"},
             "dataframe": {"x": 4.0},
         }
-        catalog = DataCatalog.from_yaml(path, parameters=params)
+        catalog = Catalog.from_yaml(path, parameters=params)
 
         assert len(catalog) == 2
         assert "dataframe" in catalog
