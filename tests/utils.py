@@ -19,9 +19,9 @@ def pytest_assert(error_class, message: Optional[str] = None, exact: bool = True
         if message is not None:
             error_message: str = e.args[0]
             if exact:
-                assert error_message == message
+                assert error_message == message, f"`{error_message}` != `{message}`"
             else:
-                assert message in error_message
+                assert message in error_message, f"`{error_message}` not in `{message}`"
 
 
 def are_dataframes_equal(

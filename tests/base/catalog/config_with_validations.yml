@@ -1,0 +1,50 @@
+pandas_sql:
+  # please make sure the class is an importable callable
+  # this can be a class constructor or a function.
+  callable: pytalog.pandas.data_sources.SqlSource
+  args:
+    sql: select * from database.table
+    con: http://<your database url>
+dataframe:
+  # This will create a fixed DataFrame to read using this source.
+  callable: pytalog.pandas.data_sources.DataFrameSource
+  args:
+    df:
+      # We can instantiate complex objects in the same way 
+      # DataSource's are instantiated:
+      callable: pandas.DataFrame
+      args:
+        data:
+          x: 
+            - 1.0
+            - 2.0
+          y:
+            - "a"
+            - "b"
+  validations:
+    - callable: tests.base.catalog.dummy_validation.dummy_check
+      args:
+        z: 10
+    - callable: tests.base.catalog.dummy_validation.dummy_check
+      args:
+        z: 3
+bad_dataframe:
+  # This will create a fixed DataFrame to read using this source.
+  callable: pytalog.pandas.data_sources.DataFrameSource
+  args:
+    df:
+      # We can instantiate complex objects in the same way 
+      # DataSource's are instantiated:
+      callable: pandas.DataFrame
+      args:
+        data:
+          x: 
+            - 1.0
+            - 2.0
+          y:
+            - "a"
+            - "b"
+  validations:
+    - callable: tests.base.catalog.dummy_validation.dummy_check
+      args:
+        z: -4
