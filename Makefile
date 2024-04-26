@@ -1,3 +1,6 @@
+PYTHON_VERSION=3.10
+PYENV_NAME=pytalog
+
 # Pre-commit defaults
 pre-commit-install:
 	pip install pre-commit
@@ -7,6 +10,13 @@ pre-commit-run:
 	pre-commit run --all-files
 
 # For local development setup
+pyenv:
+	pyenv install -s ${PYTHON_VERSION}
+	pyenv virtualenv ${PYTHON_VERSION} ${PYENV_NAME} -f
+	echo ${PYENV_NAME} > .python-version
+
+pyenv-dev-setup: pyenv dev-setup
+
 dev-install:
 	./scripts/dev_install.sh -e 1
 

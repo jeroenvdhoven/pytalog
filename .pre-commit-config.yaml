@@ -48,7 +48,7 @@ repos:
   # todo: reuse test environment!
     name: unittest
     entry: 'make test-unit'
-    language: conda
+    language: system
     types: [python]
     verbose: true
     pass_filenames: false
