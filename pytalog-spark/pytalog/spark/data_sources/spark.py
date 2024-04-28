@@ -4,7 +4,7 @@ from pyspark.sql import DataFrame as SparkDataFrame
 from pyspark.sql import SparkSession
 
 from pytalog.base.data_sources.data_source import DataSource, WriteableDataSource
-from pytalog.spark.data_sources.utils import guarantee_spark
+from pytalog.spark.data_sources.guarantee import guarantee_spark
 
 
 class SparkSqlSource(DataSource[SparkDataFrame]):

@@ -48,6 +48,7 @@ exclude = '''
 '''
 
 [tool.mypy]
+mypy_path = "pytalog"
 ignore_missing_imports = true
 disallow_untyped_defs = true
 python_version = "3.8"
