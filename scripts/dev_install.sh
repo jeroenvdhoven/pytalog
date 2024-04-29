@@ -10,9 +10,9 @@ function install_package () {
     if [ $2 != "local" ];
     then
         echo "Installing $1 from host $2"
-        ip=`echo $2 or grep -oE [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+`
+        ip=`echo $2 | grep -oE [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+`
         echo "IP: $ip"
-        pip install -i $2 $1 --trusted-host $ip --upgrade
+        pip install --index-url $2 $1 --trusted-host $ip --upgrade
     else
         # make sure we use the right path for local installation
         if [ $1 == "pytalog" ];
@@ -50,7 +50,7 @@ echo "Editable state: $editable, host: $host"
 # Please note, that especially tensorflow may run into issues. On some Mac machines (M1 versions)
 # the installation may fail. It is recommended in those cases to first manually install
 # tensorflow, then install all pytalog packages.
-priority_packages=( "pytalog" "pytalog.base" )
+priority_packages=( "pytalog-base" )
 for priority_package in "${priority_packages[@]}"
 do
     echo "Priority installing: ${priority_package}"
@@ -58,13 +58,12 @@ do
 done
 
 # Install all remaining packages.
-packages=($(ls pytalog))
+packages=($(ls . | grep pytalog- ))
 for package in "${packages[@]}"
 do
-    package_path="pytalog.${package}"
-    if [[ ! " ${priority_packages[*]} " =~ " ${package_path} " ]]; then
+    if [[ ! " ${priority_packages[*]} " =~ " ${package} " ]]; then
         # only install if package wasn't priority package
-        echo "Installing: ${package_path}"
-        install_package $package_path $host $editable
+        echo "Installing: ${package}"
+        install_package $package $host $editable
     fi
 done

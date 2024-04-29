@@ -6,7 +6,6 @@ if __name__ == "__main__":
     dev_deps = ["pre-commit", "build==0.8.0", "pypiserver==1.5.1", "twine==4.0.1", "pdoc==13.1.0"]
     test_deps = ["pytest", "pytest-cov"]
     deps = [
-        f"pytalog=={version}",
         "PyYAML==6.0",
         "jinja2==3.1.2",
     ]

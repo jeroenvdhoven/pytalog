@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 from pytest import mark
 
-from pytalog.pandas.data_sources.pandas import PandasFileSource
+from pytalog.panda.data_sources import PandasFileSource
 from tests.utils import are_dataframes_equal, pytest_assert
 
 
