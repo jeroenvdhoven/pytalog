@@ -1,0 +1,2 @@
+pandas_sql:
+  sql: "select a different thing from table"

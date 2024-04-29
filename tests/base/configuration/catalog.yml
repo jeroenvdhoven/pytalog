@@ -1,0 +1,23 @@
+pandas_sql:
+  # please make sure the class is an importable callable
+  # this can be a class constructor or a function.
+  callable: pytalog.panda.data_sources.SqlSource
+  args:
+    sql: {{pandas_sql.sql}}
+    con: {{pandas_sql.con}}
+dataframe:
+  # This will create a fixed DataFrame to read using this source.
+  callable: pytalog.panda.data_sources.DataFrameSource
+  args:
+    df:
+      # We can instantiate complex objects in the same way 
+      # DataSource's are instantiated:
+      callable: pandas.DataFrame
+      args:
+        data:
+          x: 
+            - 1.0
+            - {{dataframe.x}}
+          y:
+            - "a"
+            - "b"
