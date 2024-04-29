@@ -2,62 +2,7 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from pytalog.base.data_sources.data_source import DataSource, WriteableDataSource
-
-
-class DataFrameSource(DataSource[pd.DataFrame]):
-    def __init__(self, df: pd.DataFrame) -> None:
-        """A DataSource based around a created DataFrame.
-
-        Good for testing purposes, but please use other sources for actual usage.
-
-        Args:
-            df (pd.DataFrame): The DataFrame to use as a source.
-        """
-        super().__init__()
-        self.df = df
-
-    def read(self) -> pd.DataFrame:
-        """Returns the DataFrame given as input before.
-
-        Returns:
-            pd.DataFrame: The DataFrame used to initialise this object.
-        """
-        return self.df
-
-
-class SqlSource(DataSource[pd.DataFrame]):
-    def __init__(
-        self,
-        sql: str,
-        con: str,
-        *args: Any,
-        **kwargs: Any,
-    ):
-        """Reads data from a sql table using Pandas read_sql.
-
-        This class only acts as a storage for the arguments to call Pandas read_sql.
-        For proper documentation on the arguments, check Pandas read_sql.
-
-        Args:
-            sql (str): The sql and the `sql` argument to `Pandas read_sql`.
-            con (str): The con string and `con` argument to `Pandas read_sql`.
-            args: Positional arguments to be passed to `Pandas read_sql`.
-            kwargs: Keyword arguments to be passed to `Pandas read_sql`.
-        """
-        self.sql = sql
-        self.con = con
-        self.args = args
-        self.kwargs = kwargs
-        super().__init__()
-
-    def read(self) -> pd.DataFrame:
-        """Use the provided arguments to call `read_sql`.
-
-        Returns:
-            pd.DataFrame: The result of the provided query.
-        """
-        return pd.read_sql(*self.args, sql=self.sql, con=self.con, **self.kwargs)
+from pytalog.base.data_sources.data_source import WriteableDataSource
 
 
 class PandasFileSource(WriteableDataSource[pd.DataFrame]):

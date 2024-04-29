@@ -26,11 +26,11 @@ repos:
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   # To enforce type hinting
-  rev: v0.940
+  rev: v0.981
   hooks:
   -   id: mypy
       # This setting is not that strict: see https://mypy.readthedocs.io/en/stable/config_file.html for more config options.
-      exclude: ^(tests)|(docs)/
+      exclude: (setup)|(tests)|(docs)
       additional_dependencies:
         - "types-PyYAML"
 
@@ -48,7 +48,7 @@ repos:
   # todo: reuse test environment!
     name: unittest
     entry: 'make test-unit'
-    language: conda
+    language: system
     types: [python]
     verbose: true
     pass_filenames: false
