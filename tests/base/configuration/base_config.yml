@@ -1,0 +1,6 @@
+pandas_sql:
+  sql: "select my from table"
+  con: http://<your database url>
+
+dataframe:
+  x: 9.0
