@@ -5,7 +5,7 @@ import pandas as pd
 from pytest import fixture
 
 from pytalog.base.configuration.config import Configuration
-from pytalog.panda.data_sources.sql import SqlSource
+from pytalog.pd.data_sources.sql import SqlSource
 
 
 @fixture
