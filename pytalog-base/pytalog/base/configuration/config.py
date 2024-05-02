@@ -9,7 +9,17 @@ ConfigClass = TypeVar("ConfigClass")
 
 
 class Configuration(Generic[ConfigClass]):
-    """Class for common variables used in the project."""
+    """A class to define project configuration and a data catalog in 1 go.
+
+    Use `from_hierarchical_config` to initialise this class. This will allow you to stack
+    different configuration files for different uses:
+        - Development environment (dev, prod).
+        - Common configuration.
+        - Configuration for specific run versions.
+
+    This allows you to flexibly switch between different environments and setups without
+    elaborate manual steps.
+    """
 
     config: Union[Dict, ConfigClass]
     catalog: Catalog
@@ -49,7 +59,7 @@ class Configuration(Generic[ConfigClass]):
                 parameter files.
             optional_parameters_paths (Optional[List[Path]]): Extra paths that contain optional parameters. If these
                 files are not present, a warning will be issued, but no error will be thrown. Otherwise treated just
-                like parameters_paths
+                like parameters_paths. This can be quite useful for testing purposes.
             config_converter (Optional[Callable[[Dict[str, Any]], T]], optional): A function to convert your config
                 files. This can be useful to type your config. Defaults to None, meaning we don't convert anything.
         """
