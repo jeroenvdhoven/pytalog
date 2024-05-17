@@ -1,101 +1,189 @@
-# pytalog: standardise model training across libraries
+# Pytalog
 
-## Why yet another ML package?
+This project focusses on making data catalogs, allowing you to define a jinja-temlated YAML file that you can use to read in data.
+This has a few advantages:
+- A single way of reading (and writing) your datasets, without having to know how exactly they are read, allows people to
+    more easily onboard on new projects, since all datasets are defined in the catalog YAML.
+- Templating allows you to swap between different environments, configurations, etc. without having to change your catalog file.
+    This setup is hierarchical, allowing top-level config yamls to template lower levels, creating a manageable hierarchy of configuration.
 
-## Usage and examples
-There are a couple of examples available of training scripts using pytalog and various subpackages in the `examples` folder.
+## Usage
 
-In general, you'll need the following components:
-- Catalog's: a collection of DataSource's, that can be read to produce a DataSet. This will specify which data is used by your
-model's input and how to collect it. This can range from cloud-storage files, SQL databases, etc.
-- Pipeline: Another trainable pipeline format? Yes. Those familiar with kedro will see some similarities, but we specify a difference
-between the fitting and transforming phase, much like sklearn's pipelines. The framework should be flexible enough to allow a variety
-of packages to integrate with the base Operator class, or at least comply with its interface.
-- Model: An interface that should detail well what functions are needed to make a Model work. We have intergrations and examples for sklearn, pyspark,
-and keras models, but you can also make your own integration.
-- Evaluator:
-- ExperimentLogger: 
-- input/output type checkers:
-
-Optionally, you can specify the following:
-- serialiser
-- output_folder
-- additional_files_to_store
-
-You can check the documentation for `Experiment` for more details.
-
-## Advantages
-- Modular: `pytalog` is setup as a namespace package. This allows you to install parts of the library to suit your needs.
-    Development is done by default on a full installation of `pytalog`, so all packages *should* work together.
-- Standardised: Don't code the same old steps every single time, just re-use them. `pytalog` handles a lot of good standard
-    steps in ML training, like experiment logging and keeping track of artifacts.
-- Extensive: Currently `pytalog` has a couple of integrations with other popular packages like `sklearn` and `tensorflow`, but
-    also `mlflow`. Ideally we'd like to expand this to other common ML libraries and also platforms. We'd like to see this
-    become a simple, universal starting point for machine learning with proper standardisation
-- Flexibility: Bring your own models, data sources, and preprocessing steps. Bring your own loggers and serialisers. Just
-    follow the interfaces we've set up, and you should be good to go!
-
-# Features
-## Model training
-
-The goal is to help standardise the following steps:
-- Fetching data
-- Pipeline fitting
-- Model training
-- Serialisation
-- Logging
-
-We aim to do this by providing basic interfaces that should be easy to implement for other packages.
-This should help keep the base package lightweight but flexible, while allowing subpackages to implement
-specific functionality for other packages. You can also directly extend the base interfaces to work with
-`pytalog`.
-
-## Model loading
-With most steps standardised, it becomes a lot easier to standardise model deployment as well. Currently we offer:
-
-- Loading your model in a standardised way back into memory from an output folder
-- Deploying your model using a FastAPI server
-- Packaging your model as a wheel package, with dependencies linked from the experiment.
-    - It is possible to extend this wheel package with your own functions as well, such as the FastAPI server
-
-## Subpackages
-pytalog is setup in a modular way. The base package provides the interfaces (e.g. `Model`, `DataSource` classes) and interactions between them (e.g. `Experiment` class).
-Its dependency footprint is quite low to make sure no excess packages are installed when working with `pytalog` in different ways.
-
-Subpackages like `pytalog.sklearn` provide implementations, such as sklearn, tensorflow, or mlflow integrations. Not all subpackages need to be installed,
-making deployments lighter and less prone to dependency problems. This also reduces dependencies between subpackages, reducing complicated internal dependency issues.
+### The Catalog file
+You can define a catalog YAML file as a starting point. The structure is as follows:
+```yaml
+<dataset name>:
+    callable: <python path to class, method on a class, or function. Should produce a pytalog.base.data_sources.DataSource.
+    args:
+        <name of argument 1>: <value 1>
+        <name of argument 2>: <value 2>
+    validations:
+        - callable: <python path to a ValidatorObject class or function that takes a dataset and kwargs>
+            args:
+                <name of argument>: <value>
+```
+The core consists of :
+- The name of the dataset. This will be used later to read in your data.
+- The `callable`. This is a path to a python importable class or function. When called with the args in `args`, it should return a `DataSource`.
+- The `args`. These are values that will be passed to the `callable` to create the final `DataSource`. Values can be a plain value (like string, bool, etc) or a complex object. These will follow the same format as the callable-args structure of the DataSource's, but don't need to be DataSource's. They can be arbitrary python objects instead.
 
 
-Currently the following subpackages are available:
+`DataSource`s are *not* the data itself: they are the *method* for obtaining the data. For instance, a SQL based `DataSource` would contain
+the SQL query, database connection string, etc, but it would only execute
+the query when you actually call the `.read()` method on the class. This
+allows you to make a very lightweight and quickly imported catalog that has access to all the data in your project.
 
-- `pytalog.base`: The base package. Required for other packages. Provides basics of training pytalog-compliant models.
-    - Fetching data
-    - Pipeline fitting
-    - Model training
-    - Serialisation
-    - Logging
-    - Deployment
-- `pytalog.mlflow`: MLflow integration package. Allows easy use of logging through mlflow and downloading/loading models trained through pytalog and logged on MLflow.
-- `pytalog.sklearn`: Sklearn integration package. Simplifies training sklearn models on pytalog.
-- `pytalog.xgboost`: Minor extension to the `pytalog.sklearn` package, including XGBoost models.
-- `pytalog.tensorflow`: Incorporates tensorflow/keras into pytalog.
-- `pytalog.hyperopt`: Use hyperopt to do hyperparameter tuning in pytalog.
-- `pytalog.spark`: In progress, will provide pyspark integrations for pytalog.
+The data validations are an optional part. If present, these will be executed every time you read the dataset. Consider them a useful tool to
+preemptively find potential issues with your data before doing anything else. They should all take one dataset as input and extra keyword arguments
+(defaults) can be provided using the `args` part.
 
-# Contributing
+An example of a catalog is the following:
+```yaml
+pandas_sql:
+  # please make sure the class is an importable callable
+  # this can be a class constructor or a function.
+  callable: pytalog.pd.data_sources.SqlSource
+  args:
+    sql: select * from database.table
+    con: http://<your database url>
+dataframe:
+  # This will create a fixed DataFrame to read using this source.
+  callable: pytalog.pd.data_sources.DataFrameSource
+  args:
+    df:
+      # We can instantiate complex objects in the same way 
+      # DataSource's are instantiated:
+      callable: pandas.DataFrame
+      args:
+        data:
+          x: 
+            - 1.0
+            - 2.0
+          y:
+            - "a"
+            - "b"
+```
 
-## Basics
+These catalog can be 
 
-Besides regular good coding practices, we'd like to ask you to use type hints where possible and realistic.
-This greatly helps the users and other developers develop using your new code quicker. We have mypy enabled
-to help you out and find missing type hints quicker.
-## Setting up development environment
+### Reading in a Catalog
+Say you have stored a `catalog.yaml` file like the one above. Then you can create a catalog and read data from it using:
+```python
+from pytalog.base.catalog import Catalog
 
-If you're interested in helping out, you can install all packages into your environment using `make dev-install`.
-Please make sure to also install the pre-commit steps using `make pre-commit-install`. Check out the `.pre-commit-config.yaml`
-file for the exact steps we use, but it's summarised as:
+catalog = Catalog.from_yaml("catalog.yaml")
 
-- sorting imports
-- remove unused imports
-- black
-- mypy for type hitns
+# To read a dataset:
+data = catalog.read("dataframe")
+```
+
+### Adding configuration
+It is quite common to have different locations, paths, URL, etc depending on a dev/prod environment configuration. You can also imagine other parts of your solution that can change where data can be found or how it should be read in, like a country-level configuration. For this, `pytalog` gives options as well through Jinja templating:
+
+```yaml
+# The catalog:
+pandas_sql:
+  # please make sure the class is an importable callable
+  # this can be a class constructor or a function.
+  callable: pytalog.pd.data_sources.SqlSource
+  args:
+    sql: select * from database.table
+    con: {{ database_connection }}
+dataframe:
+  # This will create a fixed DataFrame to read using this source.
+  callable: pytalog.pd.data_sources.DataFrameSource
+  args:
+    df:
+      # We can instantiate complex objects in the same way 
+      # DataSource's are instantiated:
+      callable: pandas.DataFrame
+      args:
+        data:
+          x: 
+            - 1.0
+            - {{dataframe.x}}
+          y:
+            - "a"
+            - "b"
+```
+And in python:
+```python
+from pytalog.base.catalog import Catalog
+
+catalog = Catalog.from_yaml(
+    "catalog.yaml", 
+    parameters={
+        "database_connection": "http://connection",
+        "dataframe": {"x": 10}
+    }
+)
+
+# To read a dataset:
+data = catalog.read("dataframe")
+```
+
+The values you provide in `parameters` are automatically templated into the catalog file before loading it in. Keep in mind that this method is limited to the complexity that Jinja allows: complex Python objects can't be effectively passed to the `parameters` argument since they'll be stringified and inserted into the YAML file before being read back in.
+
+### The Configuration object
+This `parameters` would still leave you with the responsibility of reading in the parameters, doing any hierarchical processing, and then passing it all on to the Catalog object. To solve this, there is the Configuration object, which you can provide with multiple configuration YAML files and a catalog file. In turn, it provides you with the hierarchically templated configuration object and resulting Catalog:
+
+```yaml
+# Environment config
+env: dev
+database_connection: http://dev-database.now
+```
+
+```yaml
+# Base configuration that uses info from the environment config
+database_name: database-{{ env }}
+dataframe:
+    x: 2.5
+```
+
+```yaml
+# The catalog:
+pandas_sql:
+  # please make sure the class is an importable callable
+  # this can be a class constructor or a function.
+  callable: pytalog.pd.data_sources.SqlSource
+  args:
+    sql: select * from {{ database_name }}.table
+    con: {{ database_connection }}
+dataframe:
+  # This will create a fixed DataFrame to read using this source.
+  callable: pytalog.pd.data_sources.DataFrameSource
+  args:
+    df:
+      # We can instantiate complex objects in the same way 
+      # DataSource's are instantiated:
+      callable: pandas.DataFrame
+      args:
+        data:
+          x: 
+            - 1.0
+            - {{dataframe.x}}
+          y:
+            - "a"
+            - "b"
+```
+
+This can be loaded in using the Configuration object:
+
+```python
+from pytalog.base.configuration.config import Configuration
+
+# This will contain 2 objects: 
+# - a config dictionary, for all (parsed) configuration
+# - a Catalog object based on the catalog.yaml
+cf = Configuration.from_hierarchical_config(
+    parameters_paths=["environment.yaml", "base.yaml"],
+    catalog_path="catalog.yaml",
+)
+
+catalog = cf.catalog
+
+# To read a dataset:
+data = catalog.read("dataframe")
+```
+
+I'd recommend using the Configuration object to get started to give you as much flexibility as possible when using your catalog file.
