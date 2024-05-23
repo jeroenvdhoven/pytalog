@@ -60,8 +60,12 @@ class Configuration(Generic[ConfigClass]):
             optional_parameters_paths (Optional[List[Path]]): Extra paths that contain optional parameters. If these
                 files are not present, a warning will be issued, but no error will be thrown. Otherwise treated just
                 like parameters_paths. This can be quite useful for testing purposes.
-            config_converter (Optional[Callable[[Dict[str, Any]], T]], optional): A function to convert your config
-                files. This can be useful to type your config. Defaults to None, meaning we don't convert anything.
+            config_converter (Optional[Callable[[Dict[str, Any]], ConfigClass]], optional): A function to convert your
+                config files. This can be useful to type your config. Defaults to None, meaning we don't convert
+                anything.
+
+        Returns:
+            Configuration[ConfigClass]: The configuration object, typed if you provided `config_converter`.
         """
         logger = build_logger("from_hierarchical_config")
 

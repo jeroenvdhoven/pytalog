@@ -177,13 +177,16 @@ class Catalog(Dict[str, DataSource[Data]]):
                     Used to initiate the object.
                 - args: a dictionary of args to instantiate the object with or call the
                     method with. Can be another complex object.
+            create_object (bool): Whether to create the object or just return the function and arguments.
 
         Returns:
-            Either:
-                Tuple[Callable, Dict[str, Any]]:
-                    - The callable function.
-                    - The arguments to said function.
-                Any: The object created by combining the function and arguments.
+            Union[Any, Tuple[Callable, Dict[str, Any]]]: This returns either:
+                If create_object=True:
+                    Tuple[Callable, Dict[str, Any]]:
+                        - The callable function.
+                        - The arguments to said function.
+                Else:
+                    Any: The object created by combining the function and arguments.
         """
         assert cls._is_valid_parseable_object(
             dct

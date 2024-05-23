@@ -4,7 +4,7 @@ from typing import Any, Callable, Generic, TypeVar
 Data = TypeVar("Data")
 
 
-class Validator:
+class Validator(Generic[Data]):
     def __init__(self, callable: Callable[..., None], **kwargs: Any) -> None:
         """A class that validates incomming data.
 
@@ -13,12 +13,12 @@ class Validator:
 
         Args:
             callable (Callable[..., None]): The function to use in data evaluation.
-            kwargs (Any): keyword arguments to be passed to the function besides the data.
+            **kwargs (Any): keyword arguments to be passed to the function besides the data.
         """
         self.kwargs = kwargs
         self.callable = callable
 
-    def validate(self, data: Any) -> None:
+    def validate(self, data: Data) -> None:
         """Validates if the given data meets this validation setup.
 
         This should raise an Error if the data does not meet the criteria.
@@ -36,7 +36,7 @@ class Validator:
         return self.callable.__name__
 
 
-class ValidatorObject(Generic[Data], Validator, ABC):
+class ValidatorObject(Generic[Data], Validator[Data], ABC):
     def __init__(self) -> None:
         """A validator that can be used to instantiate validations as objects.
 

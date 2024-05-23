@@ -8,7 +8,12 @@ Data = TypeVar("Data")
 
 class ValidationSet(Dict[str, List[Validator]]):
     def __init__(self, **kwargs: Any) -> None:
-        """Validates data using customisable functions."""
+        """Provides a set of data validations.
+
+        Args:
+            **kwargs (Any): name-Validation pairs of dataset names and the corresponding list
+                of data validations.
+        """
         super().__init__(**kwargs)
         self.logger = logging.getLogger(__name__)
 
@@ -17,7 +22,7 @@ class ValidationSet(Dict[str, List[Validator]]):
         Method to validate data after reading from the data source or before writing to the data source.
 
         Args:
-            table_name (str): Name of the table to validate.
+            name (str): Name of the dataset to validate. Only used in logging.
             data (Data): Data source object.
 
         Raises:

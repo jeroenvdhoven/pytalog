@@ -16,8 +16,9 @@ class SparkSqlSource(DataSource[SparkDataFrame]):
         """Use Spark SQL as an input data source.
 
         Args:
-            spark_session (SparkSession): The current SparkSession.
             query (str): The query to run to get the data.
+            spark_session (Optional[SparkSession]): The current SparkSession. Defaults to fetching
+                the current active session.
         """
         super().__init__()
         self.query = query

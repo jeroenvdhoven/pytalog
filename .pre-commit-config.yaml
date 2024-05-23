@@ -35,13 +35,19 @@ repos:
         - "types-PyYAML"
 
 - repo: https://github.com/PyCQA/flake8.git
-  # Check documentation
+  # Check code style
   rev: '7.0.0'
   hooks:
     - id: flake8
       additional_dependencies:
         - flake8-docstrings
         - flake8-pyproject
+
+- repo: https://github.com/jsh9/pydoclint
+  # Check docstrings for consistency with code.
+  rev: '0.3.8'
+  hooks:
+    - id: pydoclint
 
 - repo: local
   hooks:
