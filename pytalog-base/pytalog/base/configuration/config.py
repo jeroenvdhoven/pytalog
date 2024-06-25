@@ -48,6 +48,7 @@ class Configuration(Generic[ConfigClass]):
         catalog_path: Path,
         optional_parameters_paths: Optional[List[Path]] = None,
         config_converter: Optional[Callable[[Dict[str, Any]], ConfigClass]] = None,
+        initialised_parameters: Optional[Dict[str, Any]] = None,
     ) -> "Configuration[ConfigClass]":
         """Initialise the configuration and catalog from a hierarchical configuration.
 
@@ -63,6 +64,9 @@ class Configuration(Generic[ConfigClass]):
             config_converter (Optional[Callable[[Dict[str, Any]], ConfigClass]], optional): A function to convert your
                 config files. This can be useful to type your config. Defaults to None, meaning we don't convert
                 anything.
+            initialised_parameters (Optional[Dict[str, Any]]): Python objects that need to be available as well while
+                loading the catalog. These will not be stored in the configuration object. This can be useful for
+                objects like SparkSessions.
 
         Returns:
             Configuration[ConfigClass]: The configuration object, typed if you provided `config_converter`.
@@ -95,6 +99,7 @@ class Configuration(Generic[ConfigClass]):
         catalog = Catalog.from_yaml(
             path=catalog_path,
             parameters=parameters,
+            initialised_parameters=initialised_parameters,
         )
 
         return cls(config=config, catalog=catalog)

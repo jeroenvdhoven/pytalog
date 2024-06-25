@@ -23,6 +23,20 @@ class DummyDataSource(DataSource[int]):
         return p + 5
 
 
+class PreInitSource(DataSource[float]):
+    def __init__(self, a: int, alt: dict) -> None:
+        super().__init__()
+        self.a = a
+        self.alt = alt
+
+    def read(self) -> float:
+        return self.a + self.alt["b"]
+
+
+def dummy_func(a, b, *c, **d):
+    return a + b
+
+
 class Test_Catalog:
     def test_read_all(self):
         dss = Catalog[int](
@@ -126,6 +140,41 @@ class Test_Catalog:
         assert cl == DummyDataSource
         assert args == {"p": p}
 
+    def test_pre_initialised_parse_object(self):
+        a = 2
+        dct = {"callable": "tests.base.catalog.test_data_catalog.PreInitSource", "args": {}}
+        result = Catalog._parse_object(dct, create_object=True, initialised_parameters={"alt": {"b": 932}, "a": a})
+
+        assert isinstance(result, PreInitSource)
+        assert result.read() == 932 + a
+
+    def test_pre_initialised_parse_object_ignore_unnecessary_values(self):
+        a = 2
+        dct = {"callable": "tests.base.catalog.test_data_catalog.PreInitSource", "args": {}}
+        result = Catalog._parse_object(
+            dct, create_object=True, initialised_parameters={"alt": {"b": 932}, "a": a, "c": 32984}
+        )
+
+        assert isinstance(result, PreInitSource)
+        assert result.read() == 932 + a
+
+    def test_pre_initialised_parse_object_skip_present_values(self):
+        a = 2
+        #  'a' in dict is more important.
+        dct = {"callable": "tests.base.catalog.test_data_catalog.PreInitSource", "args": {"a": a}}
+        result = Catalog._parse_object(dct, create_object=True, initialised_parameters={"alt": {"b": 932}, "a": 23789})
+
+        assert isinstance(result, PreInitSource)
+        assert result.read() == 932 + a
+
+    def test_pre_initialised_parse_object_ignore_kwargs(self):
+        a = 2
+        b = 9
+        dct = {"callable": "tests.base.catalog.test_data_catalog.dummy_func", "args": {}}
+        result = Catalog._parse_object(dct, create_object=True, initialised_parameters={"a": a, "b": b, "c": 2, "d": 0})
+
+        assert result == b + a
+
     def test_from_yaml(self):
         path = Path(__file__).parent / "config.yml"
 
@@ -175,6 +224,31 @@ class Test_Catalog:
             }
         )
         assert_frame_equal(expected_df, catalog["dataframe"].read())
+
+    def test_from_yaml_with_jinja_and_preinitialised_values(self):
+        path = Path(__file__).parent / "config_with_jinja_and_inits.yml"
+
+        params = {
+            "pandas_sql": {"sql": "select * from database.table", "con": "http://<your database url>"},
+            "extra": {"a": 3},
+        }
+        initialised = {
+            "alt": {"b": 4.0},
+        }
+        catalog = Catalog.from_yaml(path, parameters=params, initialised_parameters=initialised)
+
+        assert len(catalog) == 2
+        assert "extra" in catalog
+        assert "pandas_sql" in catalog
+
+        # pandas_sql
+        sql_source = catalog["pandas_sql"]
+        assert sql_source.sql == "select * from database.table"
+        assert sql_source.con == "http://<your database url>"
+
+        # extra
+        expected_result = params["extra"]["a"] + initialised["alt"]["b"]
+        assert expected_result == catalog["extra"].read()
 
     def test_from_yaml_with_validation(self):
         path = Path(__file__).parent / "config_with_validations.yml"

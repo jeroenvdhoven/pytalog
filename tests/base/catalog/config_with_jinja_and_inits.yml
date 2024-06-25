@@ -1,0 +1,12 @@
+pandas_sql:
+  # please make sure the class is an importable callable
+  # this can be a class constructor or a function.
+  callable: pytalog.pd.data_sources.SqlSource
+  args:
+    sql: {{pandas_sql.sql}}
+    con: {{pandas_sql.con}}
+
+extra:
+  callable: tests.base.catalog.test_data_catalog.PreInitSource
+  args:
+    a: {{extra.a}}

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 from pytest import fixture
@@ -131,3 +132,25 @@ class TestConfiguration:
         x = config.catalog.read("dataframe")
         expected_df = pd.DataFrame({"x": [1.0, 9.0], "y": ["a", "b"]})
         pd.testing.assert_frame_equal(expected_df, x)
+
+    def test_config_initialised_params(self, this_folder: Path):
+        ip = {"a": 34}
+
+        with patch("pytalog.base.configuration.config.Catalog.from_yaml") as mock_from_yaml:
+            Configuration[DummyConfig].from_hierarchical_config(
+                parameters_paths=[this_folder / "base_config.yml"],
+                catalog_path=this_folder / "catalog.yml",
+                config_converter=DummyConfig.from_config,
+                initialised_parameters=ip,
+            )
+        mock_from_yaml.assert_called_once_with(
+            path=this_folder / "catalog.yml",
+            parameters={
+                "pandas_sql": {
+                    "sql": "select my from table",
+                    "con": "http://<your database url>",
+                },
+                "dataframe": {"x": 9.0},
+            },
+            initialised_parameters=ip,
+        )

@@ -61,7 +61,12 @@ class Catalog(Dict[str, DataSource[Data]]):
         return data
 
     @classmethod
-    def from_yaml(cls, path: Union[str, Path], parameters: Optional[Dict[str, Any]] = None) -> "Catalog":
+    def from_yaml(
+        cls,
+        path: Union[str, Path],
+        parameters: Optional[Dict[str, Any]] = None,
+        initialised_parameters: Optional[Dict[str, Any]] = None,
+    ) -> "Catalog":
         """Read a catalog in from a configuration YAML file.
 
         We expect the following format:
@@ -110,10 +115,18 @@ class Catalog(Dict[str, DataSource[Data]]):
         strings in any of the arguments. To ensure non-string values are properly parsed,
         make sure they aren't surrounded by quotation marks in the YAML.
 
+        Initialised objects can be passed as a dict using `initialised_parameters`. These will be
+        passed to the callable as well if:
+            - The same variable name appears in the arguments for that callable.
+            - The same variable name doesn't appear already in the list of provided arguments for that callable.
+
         Args:
             path (Union[str, Path]): The path to the YAML file.
             parameters (Optional[Dict[str, Any]]): an optional set of parameters to be used to
                 do jinja templating on the YAML file's strings.
+            initialised_parameters (Optional[Dict[str, Any]]): Python objects that need to be available as well while
+                loading the catalog. These variables will be passed to DataSource callables as well, following the
+                conditions layed out above.
 
         Returns:
             Catalog: A Catalog with data_sources based on the YAML file.
@@ -123,6 +136,8 @@ class Catalog(Dict[str, DataSource[Data]]):
 
         if parameters is None:
             parameters = {}
+        if initialised_parameters is None:
+            initialised_parameters = {}
 
         path = Path(path)
         with open(path, "r") as f:
@@ -133,7 +148,7 @@ class Catalog(Dict[str, DataSource[Data]]):
         assert isinstance(configuration, dict), "Cannot process YAML as Catalog: should be a dictionary."
 
         for dataset_name, dataset_params in configuration.items():
-            dataset = cls._parse_data_source(dataset_params)
+            dataset = cls._parse_data_source(dataset_params, initialised_parameters)
             assert isinstance(
                 dataset, DataSource
             ), "Please make sure objects in your Catalog only translate to data_sources."
@@ -148,9 +163,9 @@ class Catalog(Dict[str, DataSource[Data]]):
         return Catalog(validation_set=validation_set, **data_sources)
 
     @classmethod
-    def _parse_data_source(cls, dct: Dict[str, Any]) -> Any:
+    def _parse_data_source(cls, dct: Dict[str, Any], initialised_parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Creates a data source out of the dictionary."""
-        return cls._parse_object(dct, create_object=True)
+        return cls._parse_object(dct, create_object=True, initialised_parameters=initialised_parameters)
 
     @classmethod
     def _parse_validation(cls, dct: Dict[str, Any]) -> Validator:
@@ -163,7 +178,12 @@ class Catalog(Dict[str, DataSource[Data]]):
             return Validator(callable=callable, **args)
 
     @classmethod
-    def _parse_object(cls, dct: Dict[str, Any], create_object: bool) -> Union[Any, Tuple[Callable, Dict[str, Any]]]:
+    def _parse_object(
+        cls,
+        dct: Dict[str, Any],
+        create_object: bool,
+        initialised_parameters: Optional[Dict[str, Any]] = None,
+    ) -> Union[Any, Tuple[Callable, Dict[str, Any]]]:
         """Recursively parse a complex dictionary to create objects.
 
         This has 2 options:
@@ -178,6 +198,8 @@ class Catalog(Dict[str, DataSource[Data]]):
                 - args: a dictionary of args to instantiate the object with or call the
                     method with. Can be another complex object.
             create_object (bool): Whether to create the object or just return the function and arguments.
+            initialised_parameters (Optional[Dict[str, Any]]): Python objects that may to be available as well while
+                loading an object.
 
         Returns:
             Union[Any, Tuple[Callable, Dict[str, Any]]]: This returns either:
@@ -196,6 +218,9 @@ class Catalog(Dict[str, DataSource[Data]]):
         args = dct["args"]
         assert isinstance(args, dict), "Arguments to a parseable object should be a dict."
 
+        if initialised_parameters is None:
+            initialised_parameters = {}
+
         # Parse arguments recursively
         parsed_args = {}
         for arg_name, arg_value in args.items():
@@ -205,6 +230,14 @@ class Catalog(Dict[str, DataSource[Data]]):
                 parsed_value = arg_value
 
             parsed_args[arg_name] = parsed_value
+
+        # Only add a initialised parameter if:
+        # 1. it matches an argument name in this callable
+        # 2. AND it doesn't have a value yet.
+        argspec = inspect.getfullargspec(callable_)
+        for arg_name in argspec[0]:
+            if arg_name in initialised_parameters and arg_name not in parsed_args:
+                parsed_args[arg_name] = initialised_parameters[arg_name]
 
         if create_object:
             return callable_(**parsed_args)
