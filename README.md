@@ -185,5 +185,6 @@ catalog = cf.catalog
 # To read a dataset:
 data = catalog.read("dataframe")
 ```
+If you need any objects that are hard to instantiate in this way, you can also provide them as parameters to either `Catalog`'s `from_yaml` or `Configuration`'s `from_hierarchical_config` using the `initialised_parameters` argument. This allows you to provide a dictionary of python objects that will be inserted into the argument list of any Callable that requires it and doesn't have an argument for it yet at instantiation.
 
 I'd recommend using the Configuration object to get started to give you as much flexibility as possible when using your catalog file.

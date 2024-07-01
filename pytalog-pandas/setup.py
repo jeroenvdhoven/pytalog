@@ -1,4 +1,3 @@
-import sys
 from setuptools import find_namespace_packages, setup
 
 if __name__ == "__main__":
@@ -9,13 +8,9 @@ if __name__ == "__main__":
         "pandas>=1.4.3",
         "openpyxl>=3.1.2",
         "pyarrow>=14.0.1",
+        "numpy<2.0",
     ]
     strict_deps = [s.replace(">=", "==") for s in deps]
-
-    python_version = sys.version_info
-    if python_version[0] == 3 and python_version[1] == 9:
-        # Older python can't handle pandas 1.4.3 and numpy >= 2
-        strict_deps.append("numpy<2.0")
 
     setup(
         name="pytalog-pandas",
