@@ -14,6 +14,7 @@ if __name__ == "__main__":
     setup(
         name="pytalog-base",
         install_requires=deps,
+        python_requires=">=3.9,<3.12",
         extras_require={
             "dev": strict_deps + dev_deps + test_deps,
             "test": strict_deps + test_deps,
