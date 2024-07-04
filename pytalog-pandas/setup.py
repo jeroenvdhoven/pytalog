@@ -5,7 +5,7 @@ if __name__ == "__main__":
 
     deps = [
         f"pytalog-base=={version}",
-        "pandas>=1.4.3",
+        "pandas>=1.5.0",
         "openpyxl>=3.1.2",
         "pyarrow>=14.0.1",
         "numpy<2.0",
