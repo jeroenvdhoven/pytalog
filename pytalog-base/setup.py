@@ -1,7 +1,7 @@
 from setuptools import find_namespace_packages, setup
 
 if __name__ == "__main__":
-    version = "0.0.1"
+    version = "0.0.2"
 
     dev_deps = [
         "pre-commit",
