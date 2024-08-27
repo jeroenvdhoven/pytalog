@@ -1,7 +1,7 @@
 from setuptools import find_namespace_packages, setup
 
 if __name__ == "__main__":
-    version = "0.0.2"
+    version = "0.1.0"
 
     deps = [f"pytalog-base=={version}", "polars>=1.1.0"]
     strict_deps = [s.replace(">=", "==") for s in deps]
