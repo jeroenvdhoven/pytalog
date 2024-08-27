@@ -6,11 +6,11 @@ from pandas.testing import assert_frame_equal
 from pytest import mark
 
 from pytalog.base.catalog import Catalog, DataSet
-from pytalog.base.data_sources.data_source import DataSource
+from pytalog.base.data_sources.data_source import DataSource, WriteableDataSource
 from tests.utils import pytest_assert
 
 
-class DummyDataSource(DataSource[int]):
+class DummyDataSource(WriteableDataSource[int]):
     def __init__(self, v: int) -> None:
         super().__init__()
         self.v = v
@@ -21,6 +21,9 @@ class DummyDataSource(DataSource[int]):
     @staticmethod
     def dummy_method(p):
         return p + 5
+
+    def write(self, value: int) -> None:
+        self.v = value
 
 
 class PreInitSource(DataSource[float]):
@@ -278,3 +281,16 @@ class Test_Catalog:
 
         with pytest_assert(AssertionError, "Nope!"):
             catalog.read("bad_dataframe")
+
+    def test_write(self):
+        catalog = Catalog(name=DummyDataSource(8))
+
+        assert catalog.read("name") == 8
+        catalog.write("name", 9)
+        assert catalog.read("name") == 9
+
+    def test_write_assert(self):
+        catalog = Catalog(name=PreInitSource(8, alt={"b": 9}))
+
+        with pytest_assert(AssertionError, f"Can only write to a WriteableDataSource. Found {PreInitSource}"):
+            catalog.write("name", 9)

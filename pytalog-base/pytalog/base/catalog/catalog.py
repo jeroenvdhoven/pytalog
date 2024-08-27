@@ -8,6 +8,7 @@ from jinja2 import Template
 
 from pytalog.base.catalog.dataset import DataSet
 from pytalog.base.data_sources import DataSource
+from pytalog.base.data_sources.data_source import WriteableDataSource
 from pytalog.base.validation import ValidationSet, Validator, ValidatorObject
 
 Data = TypeVar("Data")
@@ -59,6 +60,19 @@ class Catalog(Dict[str, DataSource[Data]]):
         if not skip_validation:
             self.validation_set.validate_data(name, data)
         return data
+
+    def write(self, name: str, data: Data) -> None:
+        """Write a particular dataset to this Catalog.
+
+        Args:
+            name (str): The name of the dataset to write.
+            data (Data): The data to write.
+        """
+        writeable_source = self[name]
+        assert isinstance(
+            writeable_source, WriteableDataSource
+        ), f"Can only write to a WriteableDataSource. Found {type(writeable_source)}"
+        writeable_source.write(data)
 
     @classmethod
     def from_yaml(
