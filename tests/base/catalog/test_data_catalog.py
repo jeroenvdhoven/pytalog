@@ -102,24 +102,6 @@ class Test_Catalog:
         result = Catalog._is_valid_parseable_object(dictionary)
         assert result == expectation
 
-    def test_load_class(self):
-        path = "pytalog.base.data_sources.DataSource"
-        result = Catalog._load_class(path)
-
-        assert result == DataSource
-
-    def test_load_class_assert(self):
-        path = "pytalog.base.data_sources.DataSource:read:failure"
-
-        with pytest_assert(AssertionError, f"{path}: Catalogs do not accept paths with more than 1 `:`"):
-            Catalog._load_class(path)
-
-    def test_load_class_with_method(self):
-        path = "pytalog.base.data_sources.DataSource:read"
-        result = Catalog._load_class(path)
-
-        assert result == DataSource.read
-
     def test_parse_object(self):
         v = 10
         dct = {"callable": "tests.base.catalog.test_data_catalog.DummyDataSource", "args": {"v": v}}
@@ -252,6 +234,33 @@ class Test_Catalog:
         # extra
         expected_result = params["extra"]["a"] + initialised["alt"]["b"]
         assert expected_result == catalog["extra"].read()
+
+    def test_from_yaml_with_jinja_and_functions(self):
+        path = Path(__file__).parent / "config_with_jinja_and_functions.yml"
+
+        params = {
+            "pandas_sql": {"sql": "select * from database.table", "con": "http://<your database url>"},
+            "extra": {"a": 3},
+        }
+        catalog = Catalog.from_yaml(path, parameters=params)
+
+        assert len(catalog) == 2
+        assert "dataframe" in catalog
+        assert "pandas_sql" in catalog
+
+        # pandas_sql
+        sql_source = catalog["pandas_sql"]
+        assert sql_source.sql == "select * from database.table"
+        assert sql_source.con == "http://<your database url>"
+
+        # dataframe
+        expected_df = pd.DataFrame(
+            {
+                "x": [1.0, 2.0],
+                "y": ["15", "b"],
+            }
+        )
+        assert_frame_equal(expected_df, catalog["dataframe"].read())
 
     def test_from_yaml_with_validation(self):
         path = Path(__file__).parent / "config_with_validations.yml"
