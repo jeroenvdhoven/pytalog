@@ -1,14 +1,12 @@
-import importlib
 import inspect
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
 
-import yaml
-from jinja2 import Template
-
 from pytalog.base.catalog.dataset import DataSet
 from pytalog.base.data_sources import DataSource
 from pytalog.base.data_sources.data_source import WriteableDataSource
+from pytalog.base.utils.load_object import load_object
+from pytalog.base.utils.load_yaml import load_yaml_with_jinja
 from pytalog.base.validation import ValidationSet, Validator, ValidatorObject
 
 Data = TypeVar("Data")
@@ -134,6 +132,17 @@ class Catalog(Dict[str, DataSource[Data]]):
             - The same variable name appears in the arguments for that callable.
             - The same variable name doesn't appear already in the list of provided arguments for that callable.
 
+        We also provide the convenience function `call_func` to run
+        python functions in a Jinja template. This is useful for doing
+        operations on-the-fly, e.g. fetching secrets. Assume you have:
+            - A python function in the file project/main.py called get_secrets
+            - It requires a parameter called `name`
+            - You want to fetch the secret called 'foo'.
+
+        ```yaml
+        - secret: {{ call_func('project.main.get_secrets', name='foo') }}
+        ```
+
         Args:
             path (Union[str, Path]): The path to the YAML file.
             parameters (Optional[Dict[str, Any]]): an optional set of parameters to be used to
@@ -154,11 +163,7 @@ class Catalog(Dict[str, DataSource[Data]]):
             initialised_parameters = {}
 
         path = Path(path)
-        with open(path, "r") as f:
-            contents = f.read()
-
-            parsed_contents = Template(contents).render(parameters)
-            configuration = yaml.safe_load(parsed_contents)
+        configuration = load_yaml_with_jinja(path, parameters)
         assert isinstance(configuration, dict), "Cannot process YAML as Catalog: should be a dictionary."
 
         for dataset_name, dataset_params in configuration.items():
@@ -228,7 +233,7 @@ class Catalog(Dict[str, DataSource[Data]]):
             dct
         ), "Catalog: any dictionary parsed should have a `callable` and `args` entry."
 
-        callable_ = cls._load_class(dct["callable"])
+        callable_ = load_object(dct["callable"])
         args = dct["args"]
         assert isinstance(args, dict), "Arguments to a parseable object should be a dict."
 
@@ -257,40 +262,6 @@ class Catalog(Dict[str, DataSource[Data]]):
             return callable_(**parsed_args)
         else:
             return callable_, parsed_args
-
-    @staticmethod
-    def _load_class(full_path: str) -> Callable:
-        """Load a callable from a Python import path.
-
-        Supported functionality includes:
-        - Importing a class, e.g. pandas.DataFrame.
-        - Importing a static / class method, e.g. pytalog.base.catalog.Catalog:from_yaml
-
-        Args:
-            full_path (str): The path leading to the class or function to import.
-
-        Returns:
-            Callable: The class or function described in the `full_path` variable.
-        """
-        # check if we need to import a method.
-        method_split = full_path.split(":")
-        assert len(method_split) <= 2, f"{full_path}: Catalogs do not accept paths with more than 1 `:`"
-        callable_path = method_split[0]
-
-        # for importing we need to split out the last part of the string.
-        split_path = callable_path.split(".")
-        module_path = ".".join(split_path[:-1])
-        class_path = split_path[-1]
-
-        # Import the module and get the class.
-        module = importlib.import_module(module_path)
-        callable = getattr(module, class_path)
-
-        # Return the method if that was requested, otherwise just return the class.
-        if len(method_split) > 1:
-            return getattr(callable, method_split[1])
-        else:
-            return callable
 
     @staticmethod
     def _is_valid_parseable_object(dct: Dict[str, Any]) -> bool:

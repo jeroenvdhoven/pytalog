@@ -25,6 +25,21 @@ def read_config_and_catalog(
     This allows you to flexibly switch between different environments and setups without
     elaborate manual steps.
 
+    These yaml files are also templated using Jinja, so you can reuse variables from
+    already read files in subsequent files. This hierarchy is based on the order
+    of the files in parameters_paths.
+
+    We also provide the convenience function `call_func` to run
+    python functions in a Jinja template. This is useful for doing
+    operations on-the-fly, e.g. fetching secrets. Assume you have:
+        - A python function in the file project/main.py called get_secrets
+        - It requires a parameter called `name`
+        - You want to fetch the secret called 'foo'.
+
+    ```yaml
+    - secret: {{ call_func('project.main.get_secrets', name='foo') }}
+    ```
+
     Args:
         parameters_paths (List[Path]): A list of parameter files. Each file will be jinja templated by the
             previous files and the environment file. Warning: if you import the same variable, the latest variable
