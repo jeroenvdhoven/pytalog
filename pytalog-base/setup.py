@@ -14,7 +14,7 @@ if __name__ == "__main__":
     test_deps = ["pytest", "pytest-cov"]
     deps = [
         "PyYAML==6.0.1",
-        "jinja2==3.1.2",
+        "jinja2>=3.1.6",
     ]
     strict_deps = [s.replace(">=", "==") for s in deps]
 
